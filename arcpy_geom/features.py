@@ -36,7 +36,7 @@ def _prepare_db_values(v_dict, date_format='%Y-%m-%d'):
                 return_dict[key] = str(return_dict[key])
             except ValueError as ex:
                 if isinstance(return_dict[key], unicode):
-                    return_dict[key] = "'{0}'".format(return_dict[key])
+                    return_dict[key] = "'{0}'".format(return_dict[key].encode('utf-8').replace("'", r"\'"))
                 else:
                     print(type(return_dict[key]))
                     print(return_dict[key])

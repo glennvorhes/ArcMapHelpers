@@ -27,6 +27,9 @@ def _prepare_constants(const_str):
 
     _constants_parts = const_str.split(',')
 
+    if len(_constants_parts) == 1 and len(_constants_parts[0].strip()) == 0:
+        return constants_dict
+
     for i in range(len(_constants_parts)):
         _constants_parts[i] = _constants_parts[i].strip()
 

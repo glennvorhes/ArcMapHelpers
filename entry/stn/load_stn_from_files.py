@@ -27,21 +27,6 @@ def _check_row_count(table, _yr):
         return False
 
 
-def _check_link_chain_geom_count(_yr):
-    c = '"select stn.build_chain_geoms({0});"'.format(_yr)
-    _args = ['psql', '-c', c, db_name]
-
-    _p = subprocess.Popen(' '.join(_args), stdout=subprocess.PIPE, shell=True)
-    _proc_stdout = _p.communicate()[0].strip()
-    _p.wait()
-
-    arcpy.AddMessage(_proc_stdout)
-
-    count_row = int(_proc_stdout.split('\n')[2])
-
-    arcpy.AddMessage("{0} link chain geoms built for year {1}".format(count_row, _yr))
-
-
 if __name__ == "__main__":
 
     link_geom_sql = arcpy.GetParameterAsText(0)
@@ -62,20 +47,15 @@ if __name__ == "__main__":
     yr = int(arcpy.GetParameterAsText(13))
 
     sql = 'INSERT INTO stn.stn_version (year, loaded) VALUES ({0}, \'{1}\');'.format(
-        2016, datetime.now().strftime('%Y-%m-%d'))
+        yr, datetime.now().strftime('%Y-%m-%d'))
 
-    p = subprocess.Popen([
-        'psql',
-        '-c',
-        sql,
-        db_name])
+    p = subprocess.Popen(['psql', '-c', sql, db_name])
     p.wait()
 
     if p.returncode == 0:
         arcpy.AddMessage('Added new version record for year {0}'.format(yr))
     else:
         arcpy.AddMessage('Version record for year {0} exists'.format(yr))
-
 
     table_file_dict = OrderedDict()
 
@@ -90,9 +70,14 @@ if __name__ == "__main__":
     table_file_dict['stn.dt_rwrl_cumt_milg'] = cumt_milg_csv
 
     for k, v in table_file_dict.items():
+
+        args = ['psql', '-c', 'delete from {0} where year = {1};'.format(k, yr), db_name]
+        arcpy.AddMessage('\nRunning: ' + ' '.join(args))
+        p = subprocess.Popen(args, stdout=subprocess.PIPE, shell=True)
+        p.wait()
+
         args = ['psql', '-c', "\"\\copy {0} FROM {1} DELIMITER ',' CSV HEADER;\"".format(k, v), db_name]
         arcpy.AddMessage('\nRunning: ' + ' '.join(args))
-
         p = subprocess.Popen(' '.join(args), stdout=subprocess.PIPE, shell=True)
         proc_stdout = p.communicate()[0].strip()
         p.wait()
@@ -112,9 +97,13 @@ if __name__ == "__main__":
     }
 
     for k, v in geom_file_dict.items():
+        args = ['psql', '-c', 'delete from {0} where year = {1};'.format(k, yr), db_name]
+        arcpy.AddMessage('\nRunning: ' + ' '.join(args))
+        p = subprocess.Popen(args, stdout=subprocess.PIPE, shell=True)
+        p.wait()
+
         args = ['psql', '-f', v, db_name]
         arcpy.AddMessage('\nRunning: ' + ' '.join(args))
-
         p = subprocess.Popen(' '.join(args), stdout=subprocess.PIPE, shell=True)
         proc_stdout = p.communicate()[0].strip()
         p.wait()
@@ -136,8 +125,9 @@ if __name__ == "__main__":
 
     if success:
         arcpy.AddMessage('All tables loaded successfully')
-        _check_link_chain_geom_count(yr)
+        arcpy.SetParameterAsText(14, 'true')
     else:
         arcpy.AddWarning('Some tables did not load')
+        arcpy.SetParameterAsText(14, 'false')
 
 
