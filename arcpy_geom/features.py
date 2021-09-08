@@ -1,6 +1,6 @@
 from .vertex import Vertex
 import arcpy
-from abc import abstractmethod
+from abc import abstractmethod, abstractproperty
 from datetime import datetime
 
 
@@ -130,6 +130,10 @@ class Feature:
     def wkt(self):
         raise NotImplementedError
 
+    @abstractproperty
+    def geom_type(self):
+        pass
+
 
 class Point(Feature):
     def __init__(self, vertices, props=None):
@@ -157,6 +161,10 @@ class Point(Feature):
             ret = 'POINT ({x} {y})'.format(x=v.x, y=v.y)
             return ret
 
+    @property
+    def geom_type(self):
+        return 'point'
+
 
 class MultiPoint(Feature):
     def __init__(self, vertices, props=None):
@@ -169,6 +177,10 @@ class MultiPoint(Feature):
             arr.append(arcpy.Point(**v.kw))
 
         self._shape = arcpy.Multipoint(arcpy.Array(arr))
+
+    @property
+    def geom_type(self):
+        return 'multipoint'
 
 
 class LineString(Feature):
@@ -281,6 +293,17 @@ class LineString(Feature):
             ret = 'LINESTRING ({0})'.format(', '.join([v.as_wkt for v in self.vertices]))
             return ret
 
+    @property
+    def geom_type(self):
+        return 'linestring'
+
+    def flip_vertices(self):
+        if self.multipart:
+            for v_list in self.vertices:
+                v_list.reverse()
+        else:
+            self.vertices.reverse()
+
 
 class Polygon(Feature):
     def __init__(self, coords, props=None):
@@ -318,3 +341,7 @@ class Polygon(Feature):
                     vert_list.append(arcpy.Array(part))
 
             self._shape = arcpy.Polygon(arcpy.Array(vert_list))
+
+    @property
+    def geom_type(self):
+        return 'polygon'

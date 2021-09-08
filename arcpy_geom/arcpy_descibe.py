@@ -147,9 +147,12 @@ class ArcpyDescribeTable(ArcpyDescribeBase):
 
 
 class ArcpyDescribeFeatureClass(ArcpyDescribeBase):
+    def __init__(self, input_pth):
+        """
 
-    def __init__(self, the_input):
-        ArcpyDescribeBase.__init__(self, the_input)
+        :param input_pth: input path
+        """
+        ArcpyDescribeBase.__init__(self, input_pth)
 
         self._shape_field = str(self._desc.shapeFieldName)
 

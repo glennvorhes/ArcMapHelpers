@@ -1,0 +1,1 @@
+from arcpy_descibe import ArcpyDescribeFeatureClass, ArcpyDescribeTable
